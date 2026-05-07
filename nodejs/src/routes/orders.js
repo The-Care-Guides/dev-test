@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const { z } = require('zod');
 const prisma = require('../db');
 
@@ -20,6 +21,12 @@ const CreateOrderSchema = z.object({
 });
 
 function formatOrder(order) {
+  // The scanCode is what the customer's app encodes into the QR shown at the
+  // venue door. We only expose it once the order is CONFIRMED so a PENDING
+  // (unpaid) order cannot leak a usable code, and a CANCELLED order does not
+  // tempt the client into scanning a dead ticket.
+  const exposeScanCode = order.status === 'CONFIRMED';
+
   return {
     id: order.id,
     customerName: order.customerName,
@@ -38,6 +45,7 @@ function formatOrder(order) {
         seatNumber: t.seatNumber,
         price: t.price,
         status: t.status,
+        scanCode: exposeScanCode ? t.scanCode ?? null : undefined,
       })) ?? [],
   };
 }
@@ -88,6 +96,10 @@ router.post('/', async (req, res, next) => {
         seatNumber: t.seatNumber ?? null,
         price: performance.basePrice,
         status: 'VALID',
+        // Opaque, non-enumerable code generated server-side. Stored now but
+        // only surfaced to the client once the order is CONFIRMED (see
+        // formatOrder). UUID v4 has 122 bits of entropy — not brute-forceable.
+        scanCode: crypto.randomUUID(),
       });
     }
 
@@ -127,10 +139,23 @@ router.post('/:id/confirm', async (req, res, next) => {
       throw new Error(`Order cannot be confirmed in status: ${order.status}`);
     }
 
-    const updated = await prisma.order.update({
-      where: { id: order.id },
-      data: { status: 'CONFIRMED', paymentReference },
-      include: ticketInclude,
+    // Backfill scanCode for any legacy ticket missing one. New tickets always
+    // get a code at creation time, but defensive coding here keeps confirm
+    // safe even for older rows that predate the scan-code feature.
+    const updated = await prisma.$transaction(async (tx) => {
+      for (const t of order.tickets) {
+        if (!t.scanCode) {
+          await tx.ticket.update({
+            where: { id: t.id },
+            data: { scanCode: crypto.randomUUID() },
+          });
+        }
+      }
+      return tx.order.update({
+        where: { id: order.id },
+        data: { status: 'CONFIRMED', paymentReference },
+        include: ticketInclude,
+      });
     });
 
     res.json(formatOrder(updated));

@@ -39,6 +39,13 @@ model Ticket {
   seatNumber    Int?
   price         Float
   status        String      @default("VALID")
+  // Opaque code embedded in the QR shown to the customer. Generated server-side
+  // when the ticket is created so it cannot be guessed from the numeric id.
+  scanCode      String?     @unique
+  // When the ticket was scanned at venue entry (status transitions to USED).
+  usedAt        DateTime?
+  // Identifier of the staff member / device that scanned the ticket.
+  scannedBy     String?
   order         Order       @relation(fields: [orderId], references: [id])
   performance   Performance @relation(fields: [performanceId], references: [id])
 }

@@ -2,6 +2,18 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
+// Stable scan codes for the seeded tickets so tests and manual QA can rely on
+// known values. In production these are generated at ticket creation time.
+const SEED_SCAN_CODES = {
+  johnSmithA: '11111111-1111-4111-8111-111111111111',
+  johnSmithB: '22222222-2222-4222-8222-222222222222',
+  janeDoe: '33333333-3333-4333-8333-333333333333',
+  bobWilson: '44444444-4444-4444-8444-444444444444',
+  aliceBrown: '55555555-5555-4555-8555-555555555555',
+  emmaDavisA: '66666666-6666-4666-8666-666666666666',
+  emmaDavisB: '77777777-7777-4777-8777-777777777777',
+};
+
 async function main() {
   await prisma.ticket.deleteMany();
   await prisma.order.deleteMany();
@@ -33,8 +45,8 @@ async function main() {
       paymentReference: 'PAY-001-ABC',
       tickets: {
         create: [
-          { performanceId: hamilton.id, section: 'Stalls', seatRow: 'C', seatNumber: 14, price: 85.0, status: 'VALID' },
-          { performanceId: hamilton.id, section: 'Stalls', seatRow: 'C', seatNumber: 15, price: 85.0, status: 'VALID' },
+          { performanceId: hamilton.id, section: 'Stalls', seatRow: 'C', seatNumber: 14, price: 85.0, status: 'VALID', scanCode: SEED_SCAN_CODES.johnSmithA },
+          { performanceId: hamilton.id, section: 'Stalls', seatRow: 'C', seatNumber: 15, price: 85.0, status: 'VALID', scanCode: SEED_SCAN_CODES.johnSmithB },
         ],
       },
     },
@@ -49,7 +61,7 @@ async function main() {
       paymentReference: 'PAY-002-DEF',
       tickets: {
         create: [
-          { performanceId: phantom.id, section: 'Dress Circle', seatRow: 'A', seatNumber: 7, price: 65.0, status: 'VALID' },
+          { performanceId: phantom.id, section: 'Dress Circle', seatRow: 'A', seatNumber: 7, price: 65.0, status: 'VALID', scanCode: SEED_SCAN_CODES.janeDoe },
         ],
       },
     },
@@ -63,7 +75,7 @@ async function main() {
       totalAmount: 55.0,
       tickets: {
         create: [
-          { performanceId: lesmis.id, section: 'Grand Circle', seatRow: 'D', seatNumber: 22, price: 55.0, status: 'VALID' },
+          { performanceId: lesmis.id, section: 'Grand Circle', seatRow: 'D', seatNumber: 22, price: 55.0, status: 'VALID', scanCode: SEED_SCAN_CODES.bobWilson },
         ],
       },
     },
@@ -77,7 +89,7 @@ async function main() {
       totalAmount: 75.0,
       tickets: {
         create: [
-          { performanceId: wicked.id, section: 'Stalls', seatRow: 'B', seatNumber: 10, price: 75.0, status: 'CANCELLED' },
+          { performanceId: wicked.id, section: 'Stalls', seatRow: 'B', seatNumber: 10, price: 75.0, status: 'CANCELLED', scanCode: SEED_SCAN_CODES.aliceBrown },
         ],
       },
     },
@@ -92,8 +104,8 @@ async function main() {
       paymentReference: 'PAY-005-GHI',
       tickets: {
         create: [
-          { performanceId: lionking.id, section: 'Royal Circle', seatRow: 'B', seatNumber: 1, price: 90.0, status: 'USED' },
-          { performanceId: lionking.id, section: 'Royal Circle', seatRow: 'B', seatNumber: 2, price: 90.0, status: 'USED' },
+          { performanceId: lionking.id, section: 'Royal Circle', seatRow: 'B', seatNumber: 1, price: 90.0, status: 'USED', scanCode: SEED_SCAN_CODES.emmaDavisA, usedAt: new Date('2026-03-10T19:05:00'), scannedBy: 'staff-door-1' },
+          { performanceId: lionking.id, section: 'Royal Circle', seatRow: 'B', seatNumber: 2, price: 90.0, status: 'USED', scanCode: SEED_SCAN_CODES.emmaDavisB, usedAt: new Date('2026-03-10T19:05:00'), scannedBy: 'staff-door-1' },
         ],
       },
     },
