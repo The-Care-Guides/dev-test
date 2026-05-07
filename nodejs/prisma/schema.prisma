@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Performance {
+  id        Int      @id @default(autoincrement())
+  name      String
+  venue     String
+  eventDate DateTime
+  capacity  Int
+  basePrice Float
+  status    String   @default("SCHEDULED")
+  tickets   Ticket[]
+}
+
+model Order {
+  id               Int      @id @default(autoincrement())
+  customerName     String
+  customerEmail    String
+  status           String   @default("PENDING")
+  totalAmount      Float?
+  paymentReference String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  tickets          Ticket[]
+}
+
+model Ticket {
+  id            Int         @id @default(autoincrement())
+  orderId       Int
+  performanceId Int
+  section       String
+  seatRow       String?
+  seatNumber    Int?
+  price         Float
+  status        String      @default("VALID")
+  order         Order       @relation(fields: [orderId], references: [id])
+  performance   Performance @relation(fields: [performanceId], references: [id])
+}
