@@ -39,6 +39,7 @@ model Ticket {
   seatNumber    Int?
   price         Float
   status        String      @default("VALID")
+  scanToken     String      @unique @default(uuid())
   order         Order       @relation(fields: [orderId], references: [id])
   performance   Performance @relation(fields: [performanceId], references: [id])
 }

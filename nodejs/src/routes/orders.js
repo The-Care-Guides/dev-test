@@ -38,6 +38,7 @@ function formatOrder(order) {
         seatNumber: t.seatNumber,
         price: t.price,
         status: t.status,
+        scanToken: t.scanToken,
       })) ?? [],
   };
 }
